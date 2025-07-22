@@ -11,7 +11,7 @@ import SwiftUI
 struct Anas_TaskApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
     }
 }
