@@ -13,14 +13,14 @@ import Combine
 class SearchViewController: UIViewController {
     
     
-    private let viewModel: HomeViewModel
+    private let viewModel: SearchViewModel
     private var cancellables = Set<AnyCancellable>()
     private let searchController = UISearchController(searchResultsController: nil)
     private let tableView = UITableView()
     private var searchResults: [String] = [] // Replace with your actual data model
     
     
-    init(viewModel: HomeViewModel) {
+    init(viewModel: SearchViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -31,6 +31,10 @@ class SearchViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         bindViewModel()
+        
+    }
+    private func getData()async{
+       await viewModel.performSearch(query: "")
     }
     private func bindViewModel() {
         viewModel.$searchResults

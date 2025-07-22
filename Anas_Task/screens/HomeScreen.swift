@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
+    @StateObject private var sr_viewModel = SearchViewModel()
     @State private var showSearch = false
     
     var body: some View {
@@ -25,7 +26,7 @@ struct HomeView: View {
                     }
                 }
                 .sheet(isPresented: $showSearch) {
-                    SearchView(viewModel: viewModel)
+                    SearchView(viewModel: sr_viewModel)
                         .edgesIgnoringSafeArea(.all)
                 }
         }
@@ -113,7 +114,7 @@ struct SectionView: View {
 }
 
 struct SearchView: UIViewControllerRepresentable {
-    let viewModel: HomeViewModel
+    let viewModel: SearchViewModel
     
     func makeUIViewController(context: Context) -> UIViewController {
         let searchVC = SearchViewController(viewModel: viewModel)
