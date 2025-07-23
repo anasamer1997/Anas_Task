@@ -20,3 +20,18 @@ struct BilateralGridView<ContentType: DisplayableContent>: View {
         }
     }
 }
+
+struct SearchBilateralGridView<ContentType: DisplayableContent>: View {
+    let content: [ContentType]
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 16) {
+                ForEach(content, id: \.uniqueID) { item in
+                    SearchBilateralGridItem(content: item)
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+}

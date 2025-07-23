@@ -40,3 +40,37 @@ struct DefaultGridItem<ContentType: DisplayableContent>: View {
         }
     }
 }
+
+struct SearchDefaultGridItem<ContentType: DisplayableContent>: View {
+    let content: ContentType
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
+                AnyView(
+                    image
+                        .resizable()
+                        .frame(width: 150,height: 150)
+                        .aspectRatio(contentMode: .fill)
+                        .cornerRadius(8)
+                )
+            } placeholder: {
+              
+                AnyView(
+                    
+                    ProgressView()
+                        .frame(width: 50, height: 50)
+                        .foregroundStyle(Color.white)
+                        .background(Color.gray)
+                        .cornerRadius(8)
+                )
+            }
+
+            
+            Text(content.displayName)
+                .font(.subheadline.bold())
+                .lineLimit(2)
+                .frame(width: 120)
+        }
+    }
+}

@@ -27,7 +27,7 @@ struct HomeView: View {
                 }
                 
                 .sheet(isPresented: $showSearch) {
-                    SearchVC()
+                    SearchVCRepresentable()
                         .edgesIgnoringSafeArea(.all)
                 }
         }
@@ -114,7 +114,7 @@ struct SectionView: View {
     }
 }
 
-struct SearchVC: UIViewControllerRepresentable {
+struct SearchVCRepresentable: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let searchVC = SearchViewController()
         let navController = UINavigationController(rootViewController: searchVC)

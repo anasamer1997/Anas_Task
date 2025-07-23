@@ -17,9 +17,9 @@ class SearchViewController: UIViewController {
         return SearchViewModel()
     }()
 
+    @IBOutlet weak var mediaCV: UICollectionView!
     private var cancellables = Set<AnyCancellable>()
     private let searchController = UISearchController(searchResultsController: nil)
-    private let mediaCV = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
 
     
     override func viewDidLoad() {
@@ -29,11 +29,33 @@ class SearchViewController: UIViewController {
         setupViewModelBindings()
         
     }
+    private func createProductCVLayout2() -> UICollectionViewCompositionalLayout {
+        return UICollectionViewCompositionalLayout { (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
+           
+            // SQUARE TYPE
+            
+//            let item = CompositionalLayout.createItem(width: .fractionalWidth(1), height: .fractionalWidth(0.5),spacing: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+//            let Group = CompositionalLayout.createGroup(alignment: .horizontal, width: .fractionalWidth(1), height: .absolute(200), item: item, count: 1)
+//            
+//            let section = CompositionalLayout.craeteSection(group: Group, scrollingBehavor: .none, groupSpcaing: 5, contentPaddint: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+//            return section
+            
+            // Big_square TYPE
+            let item = CompositionalLayout.createItem(width: .fractionalWidth(0.8), height: .fractionalHeight(1),spacing: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+            let Group = CompositionalLayout.createGroup(alignment: .horizontal, width: .fractionalHeight(1), height: .fractionalHeight(0.5), item: item, count: 1)
+            
+            let section = CompositionalLayout.craeteSection(group: Group, scrollingBehavor: .none, groupSpcaing: 5, contentPaddint: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+            return section
+         
+        }
+    }
+    
 
     private func setupViewModelBindings() {
         viewModel.onSearchResultsUpdated = { [weak self] result in
             guard let self = self else { return }
             if result != nil{
+                mediaCV.collectionViewLayout = createProductCVLayout2()
                 DispatchQueue.main.async {
                     self.mediaCV.reloadData()
                 }
@@ -54,15 +76,13 @@ class SearchViewController: UIViewController {
         present(alert, animated: true)
     }
     private func setupUI() {
-       
-        view.backgroundColor = .systemBackground
         title = "Search"
         mediaCV.delegate = self
         mediaCV.dataSource = self
-        mediaCV.register(UICollectionViewCell.self, forCellWithReuseIdentifier:"PhotoCell")
-        
+        mediaCV.register(PortraitCollectionViewCell.self, forCellWithReuseIdentifier:"PhotoCell")
         view.addSubview(mediaCV)
         mediaCV.translatesAutoresizingMaskIntoConstraints = false
+        mediaCV.backgroundView?.backgroundColor = .orange
         NSLayoutConstraint.activate([
             mediaCV.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             mediaCV.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -94,10 +114,8 @@ extension UICollectionView {
 }
 extension SearchViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
-        guard let query = searchController.searchBar.text else { return }
-        if query != ""{
+        guard let query = searchController.searchBar.text , !query.isEmpty else { return }
             viewModel.search(query: query)
-        }
        
     }
 }
@@ -110,80 +128,128 @@ extension SearchViewController:UICollectionViewDelegate,UICollectionViewDataSour
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return viewModel.searchResults?.sections[section].content.count ?? 0
     }
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-//        return UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-//    }
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-//        return 16
-//    }
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-//        return 16
-//    }
-//    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-//           if indexPath.row == viewModel.numberOfProducts - 1 {
-//               loadingIndicator.startAnimating()
-//               viewModel.fetchProducts()
-//           }
-//       }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 16
+    }
 
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
       
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoCell", for: indexPath)
-        cell.contentConfiguration = UIHostingConfiguration(content: {
-            switch viewModel.searchResults?.sections[indexPath.row].type{
-            case "square":
-               BilateralGridView(content: [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
-            case "2_lines_grid":
-                TileGridView(content:  [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
-            case "big_square":
-                DefaultGridView(content: [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
-            default:
-                DefaultGridView(content: [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
-            }
-            
-        })
-        return cell
-    }
-
-}
-
-
-class MediaCollectionViewCell: UICollectionViewCell {
-    static let reuseIdentifier = "ProductCollectionViewCell"
-    private var hostingController: UIHostingController<AnyView>?
-    
-    func configure(with content: [SearchContent], style: String) {
-        // Remove any existing hosting controller
-        hostingController?.view.removeFromSuperview()
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoCell", for: indexPath) as! PortraitCollectionViewCell
         
-        // Create the appropriate SwiftUI view based on style
-        let rootView: AnyView
-        switch style {
-        case "square":
-            rootView = AnyView(BilateralGridView(content: content))
-        case "2_lines_grid":
-            rootView = AnyView(TileGridView(content: content))
-        case "big_square":
-            rootView = AnyView(DefaultGridView(content:content))
-        default:
-            rootView = AnyView(DefaultGridView(content:content))
+        guard let sections = viewModel.searchResults?.sections else {
+            return cell // Return empty cell if data isn't available
         }
         
-        // Create and configure the hosting controller
-        let hostingController = UIHostingController(rootView: rootView)
-        hostingController.view.backgroundColor = .clear
+        // 2. indexPath.row should probably be indexPath.section if you're using sections
+        guard indexPath.section < sections.count else {
+            return cell
+        }
+        let section = sections[indexPath.section]
         
-        // Add the hosting controller's view to the cell
-        contentView.addSubview(hostingController.view)
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: contentView.topAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            hostingController.view.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
-        ])
+
         
-        self.hostingController = hostingController
+        // 3. Force casting with as! is dangerous - better to handle the optional properly
+        guard let content = section.content as? [SearchContent] else {
+            return cell
+        }
+       
+        cell.configure(with: content[indexPath.row])
+        return cell
+       
+    }
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        switch kind {
+        case UICollectionView.elementKindSectionHeader:
+            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "CollectionViewHeaderReusableView", for: indexPath) as! CollectionViewHeaderReusableView
+            header.setup(viewModel.searchResults!.sections[indexPath.section].name)
+            return header
+        default:
+            return UICollectionReusableView()
+        }
+    }
+
+}
+final class CollectionViewHeaderReusableView: UICollectionReusableView {
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        label.textColor = .label
+        label.numberOfLines = 1
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.addSubview(titleLabel)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
+    func setup(_ title: String) {
+        titleLabel.text = title
     }
 }
 
+final class PortraitCollectionViewCell: UICollectionViewCell {
+    
+    private let cellImageView: UIImageView = {
+         let iv = UIImageView()
+         iv.contentMode = .scaleAspectFill
+         iv.clipsToBounds = true
+         iv.layer.cornerRadius = 8
+         iv.backgroundColor = .systemGray5
+         iv.translatesAutoresizingMaskIntoConstraints = false
+         return iv
+     }()
+     
+     private let cellTitleLbl: UILabel = {
+         let label = UILabel()
+         label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+         label.textColor = .label
+         label.numberOfLines = 1
+         label.translatesAutoresizingMaskIntoConstraints = false
+         return label
+     }()
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupViews()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    private func setupViews() {
+        contentView.addSubview(cellImageView)
+        contentView.addSubview(cellTitleLbl)
+        
+        NSLayoutConstraint.activate([
+            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            cellImageView.heightAnchor.constraint(equalTo: cellImageView.widthAnchor),
+            
+            cellTitleLbl.topAnchor.constraint(equalTo: cellImageView.bottomAnchor, constant: 8),
+            cellTitleLbl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            cellTitleLbl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            cellTitleLbl.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+        ])
+    }
+    
+    func configure(with content: SearchContent) {
+        cellTitleLbl.text = content.displayName
+        // Load image from URL (in production, use Kingfisher/SDWebImage)
+        if let url = URL(string: content.displayImageURL) {
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                if let data = data, let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self?.cellImageView.image = image
+                    }
+                }
+            }.resume()
+        }
+    }
+}

@@ -111,7 +111,7 @@ final class NetworkClient {
         
         return session.dataTaskPublisher(for: urlRequest)
             .tryMap { data, response in
-                print(String(data: data, encoding: .utf8))
+//                print(String(data: data, encoding: .utf8))
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NetworkError.invalidResponse
                 }
