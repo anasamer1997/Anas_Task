@@ -6,13 +6,13 @@
 //
 
 import SwiftUI
-struct BilateralGridView: View {
-    let content: [Content]
+struct BilateralGridView<ContentType: DisplayableContent>: View {
+    let content: [ContentType]
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 16) {
-                ForEach(content, id: \.articleID) { item in
+                ForEach(content, id: \.uniqueID) { item in
                     BilateralGridItem(content: item)
                 }
             }

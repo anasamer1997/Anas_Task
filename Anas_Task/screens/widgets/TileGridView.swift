@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-struct TileGridView: View {
-    let content: [Content]
-    init(content: [Content]) {
+struct TileGridView<ContentType: DisplayableContent>: View {
+    let content: [ContentType]
+    init(content: [ContentType]) {
         self.content = content
     }
     private let columns = [
@@ -19,7 +19,7 @@ struct TileGridView: View {
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(content, id: \.articleID) { item in
+            ForEach(content, id: \.uniqueID) { item in
                 TileGridItem(content: item)
             }
         }

@@ -6,12 +6,12 @@
 //
 import SwiftUI
 
-struct BilateralGridItem: View {
-    let content: Content
+struct BilateralGridItem<ContentType: DisplayableContent>: View {
+    let content: ContentType
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            CachedAsyncImage(url: URL(string: content.avatarURL)) { image in
+            CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
                 AnyView(
                     image
                         .resizable()
@@ -27,16 +27,9 @@ struct BilateralGridItem: View {
                 )
             }
             
-            Text(content.name)
+            Text(content.displayName)
                 .font(.subheadline.bold())
                 .lineLimit(1)
-            
-            if let author = content.authorName?.rawValue, !author.isEmpty {
-                Text(author)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
         }
         .frame(width: 150)
     }

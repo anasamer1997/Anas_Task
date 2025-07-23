@@ -111,6 +111,7 @@ final class NetworkClient {
         
         return session.dataTaskPublisher(for: urlRequest)
             .tryMap { data, response in
+                print(String(data: data, encoding: .utf8))
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NetworkError.invalidResponse
                 }
@@ -162,11 +163,11 @@ enum SampleAPI {
         var parameters: [String: Any]? { ["page": page] }    }
     
     struct SearchMedia: NetworkRequest {
-        typealias Response = APIResponse
+        typealias Response = SearchResponse
         
-        let query: String
+//        let query: String
         var endpoint: String { "search" }
-        var parameters: [String: Any]? { ["query": query] }
+//        var parameters: [String: Any]? { ["query": query] }
     }
     
 }

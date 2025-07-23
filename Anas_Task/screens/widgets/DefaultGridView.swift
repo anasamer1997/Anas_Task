@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-struct DefaultGridView: View {
-    let content: [Content]
+struct DefaultGridView<ContentType: DisplayableContent>: View {
+    let content: [ContentType]
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 16) {
-                ForEach(content, id: \.articleID) { item in
+                ForEach(content, id: \.uniqueID) { item in
                     DefaultGridItem(content: item)
                 }
             }

@@ -7,12 +7,12 @@
 import SwiftUI
 
 
-struct TileGridItem: View {
-    let content: Content
+struct TileGridItem<ContentType: DisplayableContent>: View {
+    let content: ContentType
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            CachedAsyncImage(url: URL(string: content.avatarURL)) { image in
+            CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
                 AnyView(
                     image
                         .resizable()
@@ -28,22 +28,15 @@ struct TileGridItem: View {
                 )
             }
             
-            Text(content.name)
+            Text(content.displayName)
                 .font(.subheadline.bold())
                 .lineLimit(2)
             
-            if let podcastName = content.podcastName?.rawValue {
-                Text(podcastName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
             
-            if let duration = content.duration.formattedDuration {
-                Text(duration)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
+            Text(content.displayDescription)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
         }
     }
 }

@@ -6,181 +6,175 @@
 //
 
 import Foundation
-// UIKit/SearchViewController.swift
 import UIKit
 import Combine
+import SwiftUI
 
 class SearchViewController: UIViewController {
+
     
-    
-    private let viewModel: SearchViewModel
+    lazy var viewModel:SearchViewModel = {
+        return SearchViewModel()
+    }()
+
     private var cancellables = Set<AnyCancellable>()
     private let searchController = UISearchController(searchResultsController: nil)
-    private let tableView = UITableView()
-    private var searchResults: [String] = [] // Replace with your actual data model
+    private let mediaCV = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+
     
-    
-    init(viewModel: SearchViewModel) {
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-    }
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupUI()
-        bindViewModel()
+        setupViewModelBindings()
         
     }
-    private func getData()async{
-       await viewModel.performSearch(query: "")
-    }
-    private func bindViewModel() {
-        viewModel.$searchResults
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.tableView.reloadData()
-            }
-            .store(in: &cancellables)
-        
-        viewModel.$isSearching
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isSearching in
-                if isSearching {
-                    self?.tableView.showLoadingIndicator()
-                } else {
-                    self?.tableView.hideLoadingIndicator()
+
+    private func setupViewModelBindings() {
+        viewModel.onSearchResultsUpdated = { [weak self] result in
+            guard let self = self else { return }
+            if result != nil{
+                DispatchQueue.main.async {
+                    self.mediaCV.reloadData()
                 }
             }
-            .store(in: &cancellables)
+            
+        }
+        
+        viewModel.onErrorMessageReceived = { [weak self] message in
+            guard let message = message else { return }
+            DispatchQueue.main.async {
+                self?.showErrorAlert(message: message)
+            }
+        }
+    }
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     private func setupUI() {
+       
         view.backgroundColor = .systemBackground
         title = "Search"
+        mediaCV.delegate = self
+        mediaCV.dataSource = self
+        mediaCV.register(MediaCollectionViewCell.self, forCellWithReuseIdentifier:MediaCollectionViewCell.reuseIdentifier)
         
-        // Configure search controller
+        view.addSubview(mediaCV)
+        mediaCV.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            mediaCV.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            mediaCV.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mediaCV.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mediaCV.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search podcasts, episodes..."
         navigationItem.searchController = searchController
         definesPresentationContext = true
-        
-        // Configure table view
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        tableView.dataSource = self
-        tableView.delegate = self
-        
-        view.addSubview(tableView)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
     }
 }
-// MARK: - UITableView Extensions
-extension UITableView {
+extension UICollectionView {
     func showLoadingIndicator() {
         let activityIndicator = UIActivityIndicatorView(style: .medium)
         activityIndicator.startAnimating()
-        tableFooterView = activityIndicator
+        activityIndicator.frame = CGRect(x: 0, y: 0, width: self.bounds.width, height: 50)
+        
+        let footerView = UIView(frame: CGRect(x: 0, y: 0, width: self.bounds.width, height: 50))
+        footerView.addSubview(activityIndicator)
+        
+        self.backgroundView = footerView
     }
     
     func hideLoadingIndicator() {
-        tableFooterView = nil
+        self.backgroundView = nil
     }
 }
 extension SearchViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         guard let query = searchController.searchBar.text else { return }
-        viewModel.search(query: query)
+        if query != ""{
+            viewModel.search(query: query)
+        }
+       
     }
 }
 
-extension SearchViewController: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        viewModel.searchResults.count
+
+extension SearchViewController:UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout{
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        viewModel.searchResults?.sections.count ?? 0
     }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "SearchResultCell", for: indexPath) as! SearchResultCell
-        let content = viewModel.searchResults[indexPath.row]
-        cell.configure(with: content)
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return viewModel.searchResults?.sections[section].content.count ?? 0
+    }
+//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+//        return UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+//    }
+//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+//        return 16
+//    }
+//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+//        return 16
+//    }
+//    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+//           if indexPath.row == viewModel.numberOfProducts - 1 {
+//               loadingIndicator.startAnimating()
+//               viewModel.fetchProducts()
+//           }
+//       }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(
+                  withReuseIdentifier: MediaCollectionViewCell.reuseIdentifier,
+                  for: indexPath
+              ) as! MediaCollectionViewCell
+      
+        cell.configure(with: viewModel.searchResults?.sections[indexPath.row].content ?? [], style: viewModel.searchResults?.sections[indexPath.row].type ?? "")
         return cell
     }
+
+}
+
+
+class MediaCollectionViewCell: UICollectionViewCell {
+    static let reuseIdentifier = "ProductCollectionViewCell"
+    private var hostingController: UIHostingController<AnyView>?
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let selectedContent = viewModel.searchResults[indexPath.row]
-        // Handle selection - maybe navigate to detail view
-        print("Selected: \(selectedContent.name)")
+    func configure(with content: [SearchContent], style: String) {
+        // Remove any existing hosting controller
+        hostingController?.view.removeFromSuperview()
+        
+        // Create the appropriate SwiftUI view based on style
+        let rootView: AnyView
+        switch style {
+        case "square":
+            rootView = AnyView(BilateralGridView(content: content))
+        case "2_lines_grid":
+            rootView = AnyView(TileGridView(content: content))
+        case "big_square":
+            rootView = AnyView(DefaultGridView(content:content))
+        default:
+            rootView = AnyView(DefaultGridView(content:content))
+        }
+        
+        // Create and configure the hosting controller
+        let hostingController = UIHostingController(rootView: rootView)
+        hostingController.view.backgroundColor = .clear
+        
+        // Add the hosting controller's view to the cell
+        contentView.addSubview(hostingController.view)
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: contentView.topAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        ])
+        
+        self.hostingController = hostingController
     }
 }
 
-class SearchResultCell: UITableViewCell {
-    private let iconImageView = UIImageView()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupViews()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func setupViews() {
-        iconImageView.contentMode = .scaleAspectFill
-        iconImageView.layer.cornerRadius = 4
-        iconImageView.clipsToBounds = true
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-        
-        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        subtitleLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        contentView.addSubview(iconImageView)
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(subtitleLabel)
-        
-        NSLayoutConstraint.activate([
-            iconImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            iconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 40),
-            iconImageView.heightAnchor.constraint(equalToConstant: 40),
-            
-            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            
-            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            subtitleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
-        ])
-    }
-    
-    func configure(with content: Content) {
-        titleLabel.text = content.name
-        subtitleLabel.text = content.description
-        
-        if let url = URL(string: content.avatarURL) {
-            // Use a proper image loading library like Kingfisher or SDWebImage in production
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self.iconImageView.image = image
-                    }
-                }
-            }.resume()
-        }
-    }
-}

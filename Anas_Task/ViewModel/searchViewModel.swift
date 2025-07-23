@@ -8,58 +8,77 @@
 import Foundation
 import Combine
 
-class SearchViewModel:ObservableObject{
+class SearchViewModel {
     private let searchNetworkClient = NetworkClient(baseURL: URL(string: "https://mock.apidog.com/m1/735111-711675-default/")!)
     private var cancellables = Set<AnyCancellable>()
     private let searchSubject = PassthroughSubject<String, Never>()
+    
+    // Closure-based state handlers
+    var onSearchResultsUpdated: ((SearchResponse?) -> Void)?
+    var onSearchingStateChanged: ((Bool) -> Void)?
+    var onErrorMessageReceived: ((String?) -> Void)?
+    
+    private var isSearching = false {
+        didSet {
+            onSearchingStateChanged?(isSearching)
+        }
+    }
+    
+    var searchResults: SearchResponse? {
+        didSet {
+            onSearchResultsUpdated?(searchResults)
+        }
+    }
+    
+    private var errorMessage: String? {
+        didSet {
+            onErrorMessageReceived?(errorMessage)
+        }
+    }
 
-    @Published var isSearching = false
-    @Published var searchResults: [Content] = []
-    @Published var errorMessage: String?
- 
+    init(){
+        setupSearchPublisher()
+    }
     private func setupSearchPublisher() {
         searchSubject
             .debounce(for: .milliseconds(200), scheduler: DispatchQueue.main)
             .removeDuplicates()
-            .sink { [weak self] query in
-                guard let self = self else { return }
-                self.performSearch(query: query)
+            .handleEvents(receiveOutput: { [weak self] _ in
+                self?.isSearching = true
+            })
+            .flatMap { [weak self] query -> AnyPublisher<SearchResponse, Never> in
+                guard let self = self, !query.isEmpty else {
+                    return Just(SearchResponse(sections: []))
+                                       .eraseToAnyPublisher()
+                }
+                
+                return self.searchNetworkClient.execute(SampleAPI.SearchMedia())
+                    .map { $0 }
+                    .catch { [weak self] error -> Just<SearchResponse> in
+                        DispatchQueue.main.async {
+                            self?.errorMessage = error.errorDescription
+                        }
+                        return Just(SearchResponse(sections: []))
+                    }
+                    .eraseToAnyPublisher()
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] results in
+                
+                self?.searchResults = results
+                self?.isSearching = false
             }
             .store(in: &cancellables)
     }
+    
     func search(query: String) {
-        // Just send the query to the subject, the debounce will handle the timing
         searchSubject.send(query)
     }
     
     func clearSearch() {
-        searchResults = []
+        searchSubject.send("")
+        searchResults =  SearchResponse(sections: [])
         isSearching = false
         errorMessage = nil
-    }
-    
-    func performSearch(query: String) {
-        guard !query.isEmpty else {
-            searchResults = []
-            isSearching = false
-            return
-        }
-        
-        isSearching = true
-        
-        
-        searchNetworkClient.execute(SampleAPI.SearchMedia(query: ""))
-            .sink { [weak self] completion in
-                self?.isSearching = false
-                
-                if case .failure(let error) = completion {
-                    self?.errorMessage = error.errorDescription
-                }
-            } receiveValue: { [weak self] response in
-                guard let self = self else { return }
-               
-                self.searchResults = response.sections.flatMap { $0.content }
-            }
-            .store(in: &cancellables)
     }
 }

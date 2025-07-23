@@ -7,12 +7,12 @@
 import SwiftUI
 
 
-struct DefaultGridItem: View {
-    let content: Content
+struct DefaultGridItem<ContentType: DisplayableContent>: View {
+    let content: ContentType
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            CachedAsyncImage(url: URL(string: content.avatarURL)) { image in
+            CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
                 AnyView(
                     image
                         .resizable()
@@ -33,7 +33,7 @@ struct DefaultGridItem: View {
             }
 
             
-            Text(content.name)
+            Text(content.displayName)
                 .font(.subheadline.bold())
                 .lineLimit(2)
                 .frame(width: 120)

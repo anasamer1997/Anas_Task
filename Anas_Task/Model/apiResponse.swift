@@ -80,6 +80,13 @@ struct Content: Codable, Hashable {
     }
 }
 
+extension Content: DisplayableContent {
+    var displayName: String { name }
+    var displayDescription: String { description }
+    var displayImageURL: String { avatarURL }
+    var uniqueID: String { articleID }
+}
+
 enum AudiobookID: String, Codable {
     case audiobook001 = "audiobook_001"
 }
@@ -103,3 +110,4 @@ enum PodcastName: String, Codable {
     case nprNewsNow = "NPR News Now"
     case theNPRPoliticsPodcast = "The NPR Politics Podcast"
 }
+
