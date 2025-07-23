@@ -59,7 +59,7 @@ class SearchViewController: UIViewController {
         title = "Search"
         mediaCV.delegate = self
         mediaCV.dataSource = self
-        mediaCV.register(MediaCollectionViewCell.self, forCellWithReuseIdentifier:MediaCollectionViewCell.reuseIdentifier)
+        mediaCV.register(UICollectionViewCell.self, forCellWithReuseIdentifier:"PhotoCell")
         
         view.addSubview(mediaCV)
         mediaCV.translatesAutoresizingMaskIntoConstraints = false
@@ -127,12 +127,21 @@ extension SearchViewController:UICollectionViewDelegate,UICollectionViewDataSour
 //       }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(
-                  withReuseIdentifier: MediaCollectionViewCell.reuseIdentifier,
-                  for: indexPath
-              ) as! MediaCollectionViewCell
       
-        cell.configure(with: viewModel.searchResults?.sections[indexPath.row].content ?? [], style: viewModel.searchResults?.sections[indexPath.row].type ?? "")
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoCell", for: indexPath)
+        cell.contentConfiguration = UIHostingConfiguration(content: {
+            switch viewModel.searchResults?.sections[indexPath.row].type{
+            case "square":
+               BilateralGridView(content: [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
+            case "2_lines_grid":
+                TileGridView(content:  [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
+            case "big_square":
+                DefaultGridView(content: [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
+            default:
+                DefaultGridView(content: [viewModel.searchResults?.sections[indexPath.row].content] as! [SearchContent])
+            }
+            
+        })
         return cell
     }
 
