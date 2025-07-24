@@ -21,18 +21,3 @@ struct DefaultGridView<ContentType: DisplayableContent>: View {
         }
     }
 }
-
-struct SearchDefaultGridView<ContentType: DisplayableContent>: View {
-    let content: [ContentType]
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 16) {
-                ForEach(content, id: \.uniqueID) { item in
-                    SearchDefaultGridItem(content: item)
-                }
-            }
-            .padding(.horizontal)
-        }
-    }
-}

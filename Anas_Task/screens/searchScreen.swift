@@ -29,38 +29,15 @@ class SearchViewController: UIViewController {
         setupViewModelBindings()
         
     }
-    private func createProductCVLayout2() -> UICollectionViewCompositionalLayout {
-        return UICollectionViewCompositionalLayout { (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
-           
-            // SQUARE TYPE
-            
-//            let item = CompositionalLayout.createItem(width: .fractionalWidth(1), height: .fractionalWidth(0.5),spacing: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-//            let Group = CompositionalLayout.createGroup(alignment: .horizontal, width: .fractionalWidth(1), height: .absolute(200), item: item, count: 1)
-//            
-//            let section = CompositionalLayout.craeteSection(group: Group, scrollingBehavor: .none, groupSpcaing: 5, contentPaddint: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-//            return section
-            
-            // Big_square TYPE
-            let item = CompositionalLayout.createItem(width: .fractionalWidth(0.8), height: .fractionalHeight(1),spacing: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-            let Group = CompositionalLayout.createGroup(alignment: .horizontal, width: .fractionalHeight(1), height: .fractionalHeight(0.5), item: item, count: 1)
-            
-            let section = CompositionalLayout.craeteSection(group: Group, scrollingBehavor: .none, groupSpcaing: 5, contentPaddint: NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-            return section
-         
-        }
-    }
-    
 
     private func setupViewModelBindings() {
         viewModel.onSearchResultsUpdated = { [weak self] result in
             guard let self = self else { return }
             if result != nil{
-                mediaCV.collectionViewLayout = createProductCVLayout2()
                 DispatchQueue.main.async {
                     self.mediaCV.reloadData()
                 }
             }
-            
         }
         
         viewModel.onErrorMessageReceived = { [weak self] message in
@@ -70,6 +47,7 @@ class SearchViewController: UIViewController {
             }
         }
     }
+    
     private func showErrorAlert(message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -121,7 +99,7 @@ extension SearchViewController: UISearchResultsUpdating {
 }
 
 
-extension SearchViewController:UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout{
+extension SearchViewController:UICollectionViewDelegate,UICollectionViewDataSource{
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         viewModel.searchResults?.sections.count ?? 0
     }
@@ -170,86 +148,64 @@ extension SearchViewController:UICollectionViewDelegate,UICollectionViewDataSour
     }
 
 }
-final class CollectionViewHeaderReusableView: UICollectionReusableView {
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
-        label.textColor = .label
-        label.numberOfLines = 1
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        self.addSubview(titleLabel)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    
-    func setup(_ title: String) {
-        titleLabel.text = title
-    }
-}
 
-final class PortraitCollectionViewCell: UICollectionViewCell {
-    
-    private let cellImageView: UIImageView = {
-         let iv = UIImageView()
-         iv.contentMode = .scaleAspectFill
-         iv.clipsToBounds = true
-         iv.layer.cornerRadius = 8
-         iv.backgroundColor = .systemGray5
-         iv.translatesAutoresizingMaskIntoConstraints = false
-         return iv
-     }()
-     
-     private let cellTitleLbl: UILabel = {
-         let label = UILabel()
-         label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
-         label.textColor = .label
-         label.numberOfLines = 1
-         label.translatesAutoresizingMaskIntoConstraints = false
-         return label
-     }()
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupViews()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    private func setupViews() {
-        contentView.addSubview(cellImageView)
-        contentView.addSubview(cellTitleLbl)
-        
-        NSLayoutConstraint.activate([
-            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            cellImageView.heightAnchor.constraint(equalTo: cellImageView.widthAnchor),
-            
-            cellTitleLbl.topAnchor.constraint(equalTo: cellImageView.bottomAnchor, constant: 8),
-            cellTitleLbl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            cellTitleLbl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            cellTitleLbl.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
-        ])
-    }
-    
-    func configure(with content: SearchContent) {
-        cellTitleLbl.text = content.displayName
-        // Load image from URL (in production, use Kingfisher/SDWebImage)
-        if let url = URL(string: content.displayImageURL) {
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.cellImageView.image = image
-                    }
-                }
-            }.resume()
-        }
-    }
-}
+//
+//final class PortraitCollectionViewCell: UICollectionViewCell {
+//    
+//    private let cellImageView: UIImageView = {
+//         let iv = UIImageView()
+//         iv.contentMode = .scaleAspectFill
+//         iv.clipsToBounds = true
+//         iv.layer.cornerRadius = 8
+//         iv.backgroundColor = .systemGray5
+//         iv.translatesAutoresizingMaskIntoConstraints = false
+//         return iv
+//     }()
+//     
+//     private let cellTitleLbl: UILabel = {
+//         let label = UILabel()
+//         label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+//         label.textColor = .label
+//         label.numberOfLines = 1
+//         label.translatesAutoresizingMaskIntoConstraints = false
+//         return label
+//     }()
+//    override init(frame: CGRect) {
+//        super.init(frame: frame)
+//        setupViews()
+//    }
+//    
+//    required init?(coder: NSCoder) {
+//        fatalError("init(coder:) has not been implemented")
+//    }
+//    private func setupViews() {
+//        contentView.addSubview(cellImageView)
+//        contentView.addSubview(cellTitleLbl)
+//        
+//        NSLayoutConstraint.activate([
+//            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+//            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+//            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+//            cellImageView.heightAnchor.constraint(equalTo: cellImageView.widthAnchor),
+//            
+//            cellTitleLbl.topAnchor.constraint(equalTo: cellImageView.bottomAnchor, constant: 8),
+//            cellTitleLbl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+//            cellTitleLbl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+//            cellTitleLbl.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+//        ])
+//    }
+//    
+//    func configure(with content: SearchContent) {
+//        cellTitleLbl.text = content.displayName
+//        // Load image from URL (in production, use Kingfisher/SDWebImage)
+//        if let url = URL(string: content.displayImageURL) {
+//            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+//                if let data = data, let image = UIImage(data: data) {
+//                    DispatchQueue.main.async {
+//                        self?.cellImageView.image = image
+//                    }
+//                }
+//            }.resume()
+//        }
+//    }
+//}

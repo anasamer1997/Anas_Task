@@ -116,7 +116,7 @@ struct SectionView: View {
 
 struct SearchVCRepresentable: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        let searchVC = SearchViewController()
+        let searchVC = SearchScreen()
         let navController = UINavigationController(rootViewController: searchVC)
         return navController
     }

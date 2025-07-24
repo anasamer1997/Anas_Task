@@ -22,12 +22,12 @@ struct CompositionalLayout {
         let item = NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(widthDimension: width,
                                                                              heightDimension: height))
         item.contentInsets = spacing
-//        NSDirectionalEdgeInsets(top: spacing, leading: spacing, bottom: spacing, trailing: spacing)
+        //        NSDirectionalEdgeInsets(top: spacing, leading: spacing, bottom: spacing, trailing: spacing)
         return item
     }
-
+    
     static func craeteSection(group:NSCollectionLayoutGroup,scrollingBehavor:UICollectionLayoutSectionOrthogonalScrollingBehavior,groupSpcaing:CGFloat,  contentPaddint: NSDirectionalEdgeInsets) -> NSCollectionLayoutSection{
-       
+        
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior =  scrollingBehavor
         section.interGroupSpacing = groupSpcaing
@@ -72,10 +72,10 @@ struct CompositionalLayout {
         }
     }
     static func createCustomGroup(alignment: CompositionalGroupAlignment,
-                            width: NSCollectionLayoutDimension,
-                            height: NSCollectionLayoutDimension,
-                            item: NSCollectionLayoutItem,
-                            count: Int
+                                  width: NSCollectionLayoutDimension,
+                                  height: NSCollectionLayoutDimension,
+                                  item: NSCollectionLayoutItem,
+                                  count: Int
     ) -> NSCollectionLayoutGroup {
         switch alignment {
         case .vertical:
@@ -90,7 +90,4 @@ struct CompositionalLayout {
                                                       count: count)
         }
     }
-    
-    
-    
 }
