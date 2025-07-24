@@ -5,7 +5,7 @@
 //  Created by Anas Amer on 29/01/1447 AH.
 //
 
-
+import UIKit
 
 class BigSquareCollectionViewCell: UICollectionViewCell {
     private let imageView = UIImageView()

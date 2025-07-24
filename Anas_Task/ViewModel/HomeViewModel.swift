@@ -14,21 +14,15 @@ class HomeViewModel: ObservableObject {
   
     
     @Published var sections: [Section] = []
-
-
     @Published var isLoading = false
     @Published var isLoadingMore = false
     @Published var errorMessage: String?
     private var currentPage = 1
     private var totalPages = -1
-  
-    
-   
-    
- 
+
     
     @MainActor
-    func loadInitialData() async {
+    func loadInitialData() {
         isLoading = true
         errorMessage = nil
 
@@ -50,20 +44,22 @@ class HomeViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func refresh() async {
+    @MainActor
+    func refresh() {
         currentPage = 1
         totalPages = -1
         sections.removeAll()
         
-        await loadInitialData()
+        loadInitialData()
     }
+    
     @MainActor
-    func shouldLoadPagination() async {
+    func shouldLoadPagination() {
         guard !isLoadingMore else { return }
         guard currentPage < totalPages else { return }
 
         isLoadingMore = true
-        await loadInitialData()
+        loadInitialData()
         isLoadingMore = false
     }
 
