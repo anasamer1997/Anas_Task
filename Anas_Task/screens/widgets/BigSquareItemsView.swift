@@ -14,7 +14,7 @@ struct BigSquareItemsView<ContentType: DisplayableContent>: View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 16) {
                 ForEach(content, id: \.uniqueID) { item in
-                    DefaultGridItem(content: item)
+                    BigSquareItem(content: item)
                 }
             }
             .padding(.horizontal)

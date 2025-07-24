@@ -7,7 +7,7 @@
 import SwiftUI
 
 
-struct DefaultGridItem<ContentType: DisplayableContent>: View {
+struct                     BigSquareItem<ContentType: DisplayableContent>: View {
     let content: ContentType
     
     var body: some View {
@@ -17,7 +17,7 @@ struct DefaultGridItem<ContentType: DisplayableContent>: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 150, height: 150)
+                        .frame(width: 250, height: 250)
                         .cornerRadius(8)
                 )
             } placeholder: {
