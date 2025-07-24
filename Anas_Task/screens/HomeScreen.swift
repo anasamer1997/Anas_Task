@@ -9,8 +9,8 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
-
     @State private var showSearch = false
+    @State private var selectedType = ""
     
     var body: some View {
         NavigationStack {
@@ -35,7 +35,17 @@ struct HomeView: View {
     
     private var content: some View {
         ScrollView {
-            lazyVStackContent()
+            
+            VStack{
+                TabBarView(tabbarItems: viewModel.contentType,viewModel: viewModel).previewDisplayName("TabBarView")
+                if viewModel.isLoading && viewModel.sections.isEmpty {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, minHeight: 200)
+                } else {
+                    lazyVStackContent()
+                }
+            }
+            
         }
         .overlay(
             Group {
@@ -63,7 +73,7 @@ struct HomeView: View {
             
         }
     }
-    
+ 
     @ViewBuilder
     private func lazyVStackContent() -> some View {
         LazyVStack(spacing: 24) {
@@ -71,7 +81,7 @@ struct HomeView: View {
             sectionRows()
             
             // 3. Extract loading indicator to a separate view
-            if viewModel.isLoading {
+            if viewModel.isLoading{
                 loadingIndicator()
             }
         }
@@ -106,6 +116,43 @@ struct HomeView: View {
     }
 }
 
+struct TabBarView: View {
+    var tabbarItems: [String]
+    @ObservedObject var viewModel: HomeViewModel
+
+    @State var selectedIndex = 0
+
+    var body: some View {
+        ScrollViewReader { scrollView in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(tabbarItems.indices, id: \.self) { index in
+
+                        Text(tabbarItems[index])
+                            .font(.subheadline)
+                            .padding(.horizontal)
+                            .padding(.vertical, 4)
+                            .foregroundColor(selectedIndex == index ? .white : .black)
+                            .background(Capsule().foregroundColor(selectedIndex == index ? .purple : .clear))
+                            .onTapGesture {
+                                withAnimation(.easeInOut) {
+                                    selectedIndex = index
+                                    viewModel.selectedContentType = tabbarItems[index]
+                                    viewModel.showNewContentTypeData = true
+                                }
+                            }
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(25)
+
+        }
+
+    }
+}
+
 struct SectionView: View {
     let section: Section
     init(section: Section) {
@@ -122,7 +169,7 @@ struct SectionView: View {
     @ViewBuilder
     private var sectionContent: some View {
         switch section.type {
-        case "square":
+        case "square" , "queue":
             SquareItemsView(content: section.content)
         case "2_lines_grid":
             TwoItemsGrid(content: section.content)

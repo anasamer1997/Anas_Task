@@ -169,9 +169,17 @@ enum SampleAPI {
         typealias Response = APIResponse
         
         let page: Int
+        let contentType: String?
         var endpoint: String { "home_sections" }
         var method: HTTPMethod { .get }
-        var parameters: [String: Any]? { ["page": page] }    }
+        var parameters: [String: Any]? {
+            var params: [String: Any] = ["page": page]
+            if let contentType = contentType {
+                params["content_type"] = contentType
+            }
+            return params
+        }
+    }
     
     struct SearchMedia: NetworkRequest {
         typealias Response = SearchResponse
