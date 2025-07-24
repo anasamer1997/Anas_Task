@@ -23,25 +23,7 @@ struct TwoItemsGrid<ContentType: DisplayableContent>: View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHGrid(rows: rows) {
                 ForEach(content, id: \.uniqueID) { item in
-                    HStack{
-                        CachedAsyncImage(url: URL(string: item.displayImageURL)) { image in
-                            AnyView(
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .cornerRadius(8)
-
-                            )
-                        } placeholder: {
-                            AnyView(
-                                Color.gray
-                                    .frame(width: 150, height: 150)
-                                    .cornerRadius(8)
-                            )
-                        }
-                        
-                        Text(item.displayName)
-                    }
+                    ItemGridView(item: item)
                     .frame(width: 250, height: 120) // Full width
                     .cornerRadius(10)
                     .shadow(radius: 2)
@@ -50,6 +32,8 @@ struct TwoItemsGrid<ContentType: DisplayableContent>: View {
                 }
             }
             .padding(.horizontal)
+           
         }
     }
 }
+

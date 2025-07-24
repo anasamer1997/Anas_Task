@@ -6,18 +6,15 @@
 //
 import SwiftUI
 
-
-struct TileGridItem<ContentType: DisplayableContent>: View {
-    let content: ContentType
-    
+struct ItemGridView :View {
+    let item:DisplayableContent
     var body: some View {
-        HStack(spacing: 8) {
-            CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
+        HStack{
+            CachedAsyncImage(url: URL(string: item.displayImageURL)) { image in
                 AnyView(
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 90, height: 120)
                         .cornerRadius(8)
 
                 )
@@ -29,11 +26,7 @@ struct TileGridItem<ContentType: DisplayableContent>: View {
                 )
             }
             
-            Text(content.displayName)
-                .font(.subheadline.bold())
-                .lineLimit(2)
+            Text(item.displayName)
         }
-        .background(Color.red)
-   
     }
 }
