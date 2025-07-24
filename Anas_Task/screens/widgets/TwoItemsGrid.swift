@@ -12,7 +12,6 @@ struct TwoItemsGrid<ContentType: DisplayableContent>: View {
     init(content: [ContentType]) {
         self.content = content
     }
-    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .pink, .gray, .black, .white]
     private let rows = [
         GridItem(.fixed(120)),
         GridItem(.fixed(120))
