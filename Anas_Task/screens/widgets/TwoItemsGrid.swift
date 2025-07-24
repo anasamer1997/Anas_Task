@@ -23,7 +23,7 @@ struct TwoItemsGrid<ContentType: DisplayableContent>: View {
             LazyHGrid(rows: rows) {
                 ForEach(content, id: \.uniqueID) { item in
                     ItemGridView(item: item)
-                    .frame(width: 250, height: 120) // Full width
+                    .frame(width: 350, height: 120) // Full width
                     .cornerRadius(10)
                     .shadow(radius: 2)
                         

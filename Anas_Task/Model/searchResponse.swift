@@ -41,6 +41,14 @@ struct SearchContent: Codable {
 }
 
 extension SearchContent: DisplayableContent {
+    var displayScore: String {
+        score
+    }
+    
+    var displayEpisodeType: String {
+        ""
+    }
+    
     var displayName: String { name }
     var displayDescription: String { description }
     var displayImageURL: String { avatarURL }

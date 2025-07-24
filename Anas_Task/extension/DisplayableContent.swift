@@ -10,6 +10,8 @@ import Foundation
 protocol DisplayableContent {
     var displayName: String { get }
     var displayDescription: String { get }
+    var displayScore:String { get }
+    var displayEpisodeType:String { get }
     var displayImageURL: String { get }
     var uniqueID: String { get }
 }

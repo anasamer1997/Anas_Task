@@ -26,7 +26,16 @@ struct ItemGridView :View {
                 )
             }
             
-            Text(item.displayName)
-        }
+            VStack(alignment: .leading,spacing: 8){
+                Text(item.displayName)
+                Text("score:\(item.displayScore)")
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+               
+            }
+            .frame(maxHeight: .infinity,alignment: .top)
+          
+        }.frame(maxWidth: .infinity,alignment: .leading)
+       
     }
 }

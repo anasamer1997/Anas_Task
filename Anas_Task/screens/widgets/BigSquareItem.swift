@@ -7,11 +7,11 @@
 import SwiftUI
 
 
-struct                     BigSquareItem<ContentType: DisplayableContent>: View {
+struct BigSquareItem<ContentType: DisplayableContent>: View {
     let content: ContentType
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
                 AnyView(
                     image
@@ -21,7 +21,7 @@ struct                     BigSquareItem<ContentType: DisplayableContent>: View 
                         .cornerRadius(8)
                 )
             } placeholder: {
-              
+                
                 AnyView(
                     
                     ProgressView()
@@ -31,12 +31,22 @@ struct                     BigSquareItem<ContentType: DisplayableContent>: View 
                         .cornerRadius(8)
                 )
             }
-
             
-            Text(content.displayName)
-                .font(.subheadline.bold())
-                .lineLimit(2)
-                .frame(width: 120)
+            
+          
+                VStack(alignment: .leading){
+                    Text("name:" + content.displayName)
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+
+                    Text("score:\(content.displayScore)")
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+                   
+                }.frame(maxWidth: .infinity,alignment: .leading)
+               
+            
+           
         }
     }
 }

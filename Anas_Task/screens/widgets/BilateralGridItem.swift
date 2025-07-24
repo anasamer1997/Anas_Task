@@ -10,7 +10,8 @@ struct BilateralGridItem<ContentType: DisplayableContent>: View {
     let content: ContentType
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading) {
+           
             CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
                 AnyView(
                     image
@@ -27,10 +28,19 @@ struct BilateralGridItem<ContentType: DisplayableContent>: View {
                 )
             }
             
-            Text(content.displayName)
-                .font(.subheadline.bold())
-                .lineLimit(1)
+            VStack(alignment: .leading){
+                Text(content.displayName)
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+                
+                Text("score:\(content.displayScore)")
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+            }
+          
         }
-        .frame(width: 150)
+        .frame(width: 150,alignment: .leading)
+        
+        
     }
 }

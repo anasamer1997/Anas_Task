@@ -82,6 +82,8 @@ struct Content: Codable, Hashable {
 
 extension Content: DisplayableContent {
     var displayName: String { name }
+    var displayScore:String { "\(score)" }
+    var displayEpisodeType:String { "\(String(describing: episodeType))"}
     var displayDescription: String { description }
     var displayImageURL: String { avatarURL }
     var uniqueID: String { articleID }
