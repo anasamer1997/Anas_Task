@@ -35,28 +35,7 @@ struct HomeView: View {
     
     private var content: some View {
         ScrollView {
-            LazyVStack(spacing: 24) {
-                ForEach(Array(viewModel.sections.enumerated()), id: \.element.id) { index, section in
-                    SectionView(section: section)
-                        .onAppear {
-                            let threshold = 2 // Start loading when 2 from the end
-                            let shouldTrigger = index >= viewModel.sections.count - threshold
-                            
-                            if shouldTrigger {
-                                Task {
-                                    await viewModel.shouldLoadPagination()
-                                }
-                            }
-                        }
-                }
-                
-                if viewModel.isLoading  {
-                    ProgressView()
-                        .frame(maxHeight: .infinity, alignment: .center)
-                        .padding()
-                }
-            }
-            .padding(.vertical)
+            lazyVStackContent()
         }
         .overlay(
             Group {
@@ -83,6 +62,47 @@ struct HomeView: View {
             }
             
         }
+    }
+    
+    @ViewBuilder
+    private func lazyVStackContent() -> some View {
+        LazyVStack(spacing: 24) {
+            // 2. Extract section rows to another function
+            sectionRows()
+            
+            // 3. Extract loading indicator to a separate view
+            if viewModel.isLoading {
+                loadingIndicator()
+            }
+        }
+        .padding(.vertical)
+    }
+
+    @ViewBuilder
+    private func sectionRows() -> some View {
+        ForEach(Array(viewModel.sections.enumerated()), id: \.element.id) { index, section in
+            SectionView(section: section)
+                .onAppear {
+                    checkPaginationThreshold(index: index)
+                }
+        }
+    }
+
+    private func checkPaginationThreshold(index: Int) {
+        let threshold = 2 // Start loading when 2 from the end
+        let shouldTrigger = index >= viewModel.sections.count - threshold
+        
+        if shouldTrigger {
+            Task {
+                await viewModel.loadMoreIfNeeded()
+            }
+        }
+    }
+
+    private func loadingIndicator() -> some View {
+        ProgressView()
+            .frame(maxHeight: .infinity, alignment: .center)
+            .padding()
     }
 }
 

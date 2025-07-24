@@ -7,78 +7,59 @@
 
 import Foundation
 import Combine
-
-class SearchViewModel {
+@MainActor
+final class SearchViewModel: ObservableObject {
     private let searchNetworkClient = NetworkClient(baseURL: URL(string: "https://mock.apidog.com/m1/735111-711675-default/")!)
-    private var cancellables = Set<AnyCancellable>()
-    private let searchSubject = PassthroughSubject<String, Never>()
     
-    // Closure-based state handlers
-    var onSearchResultsUpdated: ((SearchResponse?) -> Void)?
-    var onSearchingStateChanged: ((Bool) -> Void)?
-    var onErrorMessageReceived: ((String?) -> Void)?
+    // Published properties for SwiftUI
+    @Published private(set) var searchResults: SearchResponse?
+    @Published private(set) var isSearching = false
+    @Published private(set) var errorMessage: String?
     
-    private var isSearching = false {
-        didSet {
-            onSearchingStateChanged?(isSearching)
-        }
-    }
-    
-    var searchResults: SearchResponse? {
-        didSet {
-            onSearchResultsUpdated?(searchResults)
-        }
-    }
-    
-    private var errorMessage: String? {
-        didSet {
-            onErrorMessageReceived?(errorMessage)
-        }
-    }
-
-    init(){
-        setupSearchPublisher()
-    }
-    private func setupSearchPublisher() {
-        searchSubject
-            .debounce(for: .milliseconds(200), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .handleEvents(receiveOutput: { [weak self] _ in
-                self?.isSearching = true
-            })
-            .flatMap { [weak self] query -> AnyPublisher<SearchResponse, Never> in
-                guard let self = self, !query.isEmpty else {
-                    return Just(SearchResponse(sections: []))
-                                       .eraseToAnyPublisher()
-                }
-                
-                return self.searchNetworkClient.execute(SampleAPI.SearchMedia(query: query))
-                    .map { $0 }
-                    .catch { [weak self] error -> Just<SearchResponse> in
-                        DispatchQueue.main.async {
-                            self?.errorMessage = error.errorDescription
-                        }
-                        return Just(SearchResponse(sections: []))
-                    }
-                    .eraseToAnyPublisher()
-            }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] results in
-                
-                self?.searchResults = results
-                self?.isSearching = false
-            }
-            .store(in: &cancellables)
-    }
+    private var currentSearchTask: Task<Void, Never>?
+    private var lastSearchQuery = ""
     
     func search(query: String) {
-        searchSubject.send(query)
+        currentSearchTask?.cancel() // Cancel previous task if exists
+        
+        guard !query.isEmpty else {
+            clearSearch()
+            return
+        }
+        
+        currentSearchTask = Task {
+            // Wait for 200ms before proceeding
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            
+            // Check if we're still the current task and query hasn't changed
+            guard !Task.isCancelled, lastSearchQuery == query else { return }
+            
+            await performSearch(query: query)
+        }
+        
+        lastSearchQuery = query
+    }
+    
+    private func performSearch(query: String) async {
+        isSearching = true
+        errorMessage = nil
+        
+        do {
+            let results = try await searchNetworkClient.execute(SampleAPI.SearchMedia(query: query))
+            searchResults = results
+        } catch {
+            errorMessage = (error as? NetworkError)?.errorDescription ?? "Search failed"
+            searchResults = SearchResponse(sections: [])
+        }
+        
+        isSearching = false
     }
     
     func clearSearch() {
-        searchSubject.send("")
-        searchResults =  SearchResponse(sections: [])
+        currentSearchTask?.cancel()
+        searchResults = SearchResponse(sections: [])
         isSearching = false
         errorMessage = nil
+        lastSearchQuery = ""
     }
 }

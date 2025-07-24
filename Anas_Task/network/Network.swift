@@ -70,86 +70,97 @@ enum HTTPMethod: String {
 }
 
 // MARK: - Network Client
-final class NetworkClient {
+// MARK: - Network Client
+actor NetworkClient {
     private let session: URLSession
     private let baseURL: URL
     private let jsonDecoder: JSONDecoder
     
-    init(baseURL: URL, session: URLSession = .shared, jsonDecoder: JSONDecoder = JSONDecoder()) {
+    init(baseURL: URL,
+         session: URLSession = .shared,
+         jsonDecoder: JSONDecoder = JSONDecoder()) {
         self.baseURL = baseURL
         self.session = session
         self.jsonDecoder = jsonDecoder
-//        self.jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        // Uncomment if you need snake case conversion
+        // self.jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
     }
     
-    func execute<T: NetworkRequest>(_ request: T) -> AnyPublisher<T.Response, NetworkError> {
-        guard var urlComponents = URLComponents(url: baseURL.appendingPathComponent(request.endpoint), resolvingAgainstBaseURL: true) else {
-            return Fail(error: NetworkError.invalidURL).eraseToAnyPublisher()
+    func execute<T: NetworkRequest>(_ request: T) async throws -> T.Response {
+        // 1. Prepare URL Components
+        guard var urlComponents = URLComponents(
+            url: baseURL.appendingPathComponent(request.endpoint),
+            resolvingAgainstBaseURL: true
+        ) else {
+            throw NetworkError.invalidURL
         }
         
-        // Add query parameters if needed
+        // 2. Add Query Parameters
         if let parameters = request.parameters, !parameters.isEmpty {
-            urlComponents.queryItems = parameters.map { URLQueryItem(name: $0.key, value: "\($0.value)") }
+            urlComponents.queryItems = parameters.map {
+                URLQueryItem(name: $0.key, value: "\($0.value)")
+            }
         }
         
         guard let url = urlComponents.url else {
-            return Fail(error: NetworkError.invalidURL).eraseToAnyPublisher()
+            throw NetworkError.invalidURL
         }
         
+        // 3. Configure URLRequest
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body
         urlRequest.timeoutInterval = request.timeoutInterval
         
-        // Add headers
+        // 4. Add Headers
         request.headers?.forEach { urlRequest.addValue($0.value, forHTTPHeaderField: $0.key) }
         
-        // Default headers
+        // 5. Set Default Headers
         if urlRequest.value(forHTTPHeaderField: "Content-Type") == nil {
             urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         
-        return session.dataTaskPublisher(for: urlRequest)
-            .tryMap { data, response in
-//                print(String(data: data, encoding: .utf8))
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw NetworkError.invalidResponse
-                }
-                
-                guard 200..<300 ~= httpResponse.statusCode else {
-                    if httpResponse.statusCode == 500 {
-                        let errorMessage = String(data: data, encoding: .utf8) ?? "Internal server error"
-                        throw NetworkError.serverError(message: errorMessage)
-                    }
-                    throw NetworkError.statusCode(httpResponse.statusCode)
-                }
-                
-                return data
+        // 6. Execute Request
+        let (data, response) = try await session.data(for: urlRequest)
+        
+        // 7. Validate Response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        // 8. Handle Status Codes
+        switch httpResponse.statusCode {
+        case 200..<300:
+            do {
+                return try jsonDecoder.decode(T.Response.self, from: data)
+            } catch let decodingError as DecodingError {
+                debugPrint("Decoding error: \(decodingError)")
+                throw NetworkError.parsingError
+            } catch {
+                throw NetworkError.unknown(error)
             }
-            .decode(type: T.Response.self, decoder: jsonDecoder)
-            .mapError { error in
-                if let urlError = error as? URLError {
-                    switch urlError.code {
-                    case .notConnectedToInternet, .networkConnectionLost:
-                        return NetworkError.noInternetConnection
-                    case .timedOut:
-                        return NetworkError.timeout
-                    default:
-                        return NetworkError.unknown(urlError)
-                    }
-                } else if let networkError = error as? NetworkError {
-                    return networkError
-                } else if error is DecodingError {
-                    return NetworkError.parsingError
-                } else {
-                    return NetworkError.unknown(error)
-                }
-            }
-            .receive(on: DispatchQueue.main)
-            .eraseToAnyPublisher()
+            
+        case 500:
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Internal server error"
+            throw NetworkError.serverError(message: errorMessage)
+            
+        default:
+            throw NetworkError.statusCode(httpResponse.statusCode)
+        }
+    }
+    
+    // Helper for URLError mapping
+    private func mapURLError(_ error: URLError) -> NetworkError {
+        switch error.code {
+        case .notConnectedToInternet, .networkConnectionLost:
+            return .noInternetConnection
+        case .timedOut:
+            return .timeout
+        default:
+            return .unknown(error)
+        }
     }
 }
-
 // MARK: - Example Usage
 
 // Define your API endpoints

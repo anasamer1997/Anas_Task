@@ -44,36 +44,30 @@ class SearchScreen: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+    
     private func setupViewModelBindings() {
-        viewModel.onSearchingStateChanged = { [weak self] isSearch in
-              DispatchQueue.main.async {
-                  if isSearch{
-                      self?.activityIndicator.startAnimating()
-                  }else{
-                      self?.activityIndicator.stopAnimating()
-                  }
-                 
-              }
-          }
-          
-        viewModel.onSearchResultsUpdated = { [weak self] result in
-            guard let self = self else { return }
-            DispatchQueue.main.async {
-               
-                if result != nil{
-                    self.mediaCV.reloadData()
-                }
+        // Bind to viewModel's published properties
+        viewModel.$isSearching
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isSearching in
+                isSearching ? self?.activityIndicator.startAnimating() : self?.activityIndicator.stopAnimating()
             }
-            
-        }
+            .store(in: &cancellables)
         
-        viewModel.onErrorMessageReceived = { [weak self] message in
-            guard let message = message else { return }
-            DispatchQueue.main.async {
-              
+        viewModel.$searchResults
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.mediaCV.reloadData()
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$errorMessage
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
                 self?.showErrorAlert(message: message)
             }
-        }
+            .store(in: &cancellables)
     }
     private func setupUI() {
         title = "Search"
