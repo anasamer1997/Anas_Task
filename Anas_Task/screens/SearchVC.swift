@@ -19,7 +19,13 @@ class SearchScreen: UIViewController {
     private var mediaCV: UICollectionView!
     private var cancellables = Set<AnyCancellable>()
     private let searchController = UISearchController(searchResultsController: nil)
-    
+    private let activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.color = .systemBlue
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
     override func viewDidLoad() {
         super.viewDidLoad()
         initializeCollectionView()
@@ -39,11 +45,22 @@ class SearchScreen: UIViewController {
         present(alert, animated: true)
     }
     private func setupViewModelBindings() {
+        viewModel.onSearchingStateChanged = { [weak self] isSearch in
+              DispatchQueue.main.async {
+                  if isSearch{
+                      self?.activityIndicator.startAnimating()
+                  }else{
+                      self?.activityIndicator.stopAnimating()
+                  }
+                 
+              }
+          }
+          
         viewModel.onSearchResultsUpdated = { [weak self] result in
             guard let self = self else { return }
-            if result != nil{
-                
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+               
+                if result != nil{
                     self.mediaCV.reloadData()
                 }
             }
@@ -53,6 +70,7 @@ class SearchScreen: UIViewController {
         viewModel.onErrorMessageReceived = { [weak self] message in
             guard let message = message else { return }
             DispatchQueue.main.async {
+              
                 self?.showErrorAlert(message: message)
             }
         }
@@ -74,6 +92,11 @@ class SearchScreen: UIViewController {
             mediaCV.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             mediaCV.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mediaCV.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        view.addSubview(activityIndicator)
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
