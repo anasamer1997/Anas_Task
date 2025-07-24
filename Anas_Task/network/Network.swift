@@ -165,9 +165,9 @@ enum SampleAPI {
     struct SearchMedia: NetworkRequest {
         typealias Response = SearchResponse
         
-//        let query: String
+        let query: String
         var endpoint: String { "search" }
-//        var parameters: [String: Any]? { ["query": query] }
+        var parameters: [String: Any]? { ["query": query] }
     }
     
 }

@@ -52,7 +52,7 @@ class SearchViewModel {
                                        .eraseToAnyPublisher()
                 }
                 
-                return self.searchNetworkClient.execute(SampleAPI.SearchMedia())
+                return self.searchNetworkClient.execute(SampleAPI.SearchMedia(query: query))
                     .map { $0 }
                     .catch { [weak self] error -> Just<SearchResponse> in
                         DispatchQueue.main.async {

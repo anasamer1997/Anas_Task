@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DefaultGridView<ContentType: DisplayableContent>: View {
+struct BigSquareItemsView<ContentType: DisplayableContent>: View {
     let content: [ContentType]
     
     var body: some View {

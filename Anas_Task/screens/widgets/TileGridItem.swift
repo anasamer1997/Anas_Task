@@ -11,14 +11,15 @@ struct TileGridItem<ContentType: DisplayableContent>: View {
     let content: ContentType
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(spacing: 8) {
             CachedAsyncImage(url: URL(string: content.displayImageURL)) { image in
                 AnyView(
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 150, height: 150)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 90, height: 120)
                         .cornerRadius(8)
+
                 )
             } placeholder: {
                 AnyView(
@@ -31,12 +32,8 @@ struct TileGridItem<ContentType: DisplayableContent>: View {
             Text(content.displayName)
                 .font(.subheadline.bold())
                 .lineLimit(2)
-            
-            
-            Text(content.displayDescription)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
         }
+        .background(Color.red)
+   
     }
 }

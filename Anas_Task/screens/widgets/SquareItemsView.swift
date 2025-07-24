@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-struct BilateralGridView<ContentType: DisplayableContent>: View {
+struct SquareItemsView<ContentType: DisplayableContent>: View {
     let content: [ContentType]
     
     var body: some View {

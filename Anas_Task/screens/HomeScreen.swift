@@ -103,13 +103,13 @@ struct SectionView: View {
     private var sectionContent: some View {
         switch section.type {
         case "square":
-            BilateralGridView(content: section.content)
+            SquareItemsView(content: section.content)
         case "2_lines_grid":
-            TileGridView(content: section.content)
+            TwoItemsGrid(content: section.content)
         case "big_square":
-            DefaultGridView(content: section.content)
+            BigSquareItemsView(content: section.content)
         default:
-            DefaultGridView(content: section.content)
+            BigSquareItemsView(content: section.content)
         }
     }
 }
